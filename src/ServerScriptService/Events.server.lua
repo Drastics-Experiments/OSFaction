@@ -1,4 +1,4 @@
-local Canary = require(game.ReplicatedStorage.Shared.Packages.canaryengine)
+local Canary = require(game:GetService("ReplicatedStorage").Shared.Packages.canaryengine)
 local Players = game:GetService("Players")
 repeat
 	task.wait()

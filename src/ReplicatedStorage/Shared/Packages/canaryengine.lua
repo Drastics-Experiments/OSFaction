@@ -1,1 +1,0 @@
-return require(script.Parent._Index["canary-development_canaryengine@7.0.2"]["canaryengine"])

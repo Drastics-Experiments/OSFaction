@@ -1,1 +1,0 @@
-return require(script.Parent.Parent["lolmansreturn_red-backend@1.2.7"]["red-backend"])

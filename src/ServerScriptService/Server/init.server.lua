@@ -6,23 +6,33 @@ local Players = game:GetService("Players")
 local Template = require(script.FactionTemplate)
 local canary = require(Packages.canaryengine)
 local Datastore = require(script.Datastore)
+local Manager = require(script.DatastoreManager)
 
 local __DatastoreName = "TestingFactions"
 
-local NameStore = Datastore.new(__DatastoreName, "Storage", "Names")
+local NameStore = Manager.IndexDatastore("Storage", "Names")
 
 local DataCache = {}
 local CurrentFactions = {}
 
-if NameStore:Read().Value == nil then
-	NameStore:Open({})
+if Manager.ReadDatastore(NameStore) == nil then
+	Manager.OpenDatastore(NameStore, {})
     NameStore:Close()
 end
 
 local LastRead, LastReadTime = {}, 0
 
 local Server = canary.Server()
-local Create = Server.Network.Function("CreateFaction", true)
+
+local Create = Server.Network.Function("Create", true)
+local Invite = Server.Network.Function("Invite", true)
+local Join = Server.Network.Function("Join", true)
+local Kick = Server.Network.Function("Kick", true)
+local Ban = Server.Network.Function("Ban", true)
+local Leave = Server.Network.Function("Leave", true)
+
+
+local GetFactions = Server.Network.Function("GetFactions", true)
 
 Create:OnInvoke(function(sender: Player, FactionID: string)
     if string.len(FactionID) > 5 then return end
@@ -38,22 +48,11 @@ Create:OnInvoke(function(sender: Player, FactionID: string)
     
     if LastRead[FactionID] then return end
 
-    local NewFaction = Datastore.new(__DatastoreName, "Factions", FactionID)
-    local NewFactionStatus = ""
-    local NameStoreStatus = ""
-    local T = Template()
-
-    repeat
-        if NewFactionStatus ~= "Success" then
-            NewFactionStatus = NewFaction:Open(T)
-        end
-
-        if NameStoreStatus ~= "Success" then
-            NameStoreStatus = NameStore:Open()
-        end
-        task.wait(1)
-    until NameStoreStatus == "Success" and NewFactionStatus == "Success"
-
+    local NewFaction = Manager.IndexDatastore("Factions", FactionID)
+    if Manager.ReadDatastore(NewFaction) == nil then
+        Manager.OpenDatastore(NewFaction, Template())
+        Manager.OpenDatastore(NameStore, {})
+    end
 
     NewFaction.Value.Members[sender.UserId] = "Owner"
     DataCache[sender.UserId].Faction = FactionID
@@ -62,9 +61,6 @@ Create:OnInvoke(function(sender: Player, FactionID: string)
 
     NameStore:Close()
     NewFaction:Close()
-
-    print(CurrentFactions)
-    print(LastRead)
 end)
 
 Create:SetRateLimit(5, 10, function(sender)
@@ -73,20 +69,23 @@ Create:SetRateLimit(5, 10, function(sender)
 end)
 
 
+Join:OnInvoke(function(sender)
+    
+end)
+
 local __Template = {
 	Faction = "None",
 	TimeIngame = 0
 }
 
 canary.Signal("PlayerJoined"):Connect(function(player)
-	DataCache[player.UserId] = Datastore.new(__DatastoreName, "PlayerData", player.UserId)
-	local PlrCache = DataCache[player.UserId]
-	repeat
-		print("Yield")
-		task.wait(5)
-	until PlrCache:Open(__Template) == "Success"
+    local Data = Manager.IndexDatastore("PlayerData", player.UserId)
 
-	local FactionName = PlrCache.Value.Faction
+    Manager.OpenDatastore(Data, {
+        Faction = "None",
+    })
+
+	local FactionName = Data.Value.Faction
 	print(DataCache[player.UserId])
 	if FactionName ~= "None" then
 		if not Map:GetAsync(FactionName) then
