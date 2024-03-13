@@ -50,6 +50,16 @@ function DatastoreManager.OpenDatastore(path: string | Datastore.DataStore, temp
     while Data:Open(template) ~= "Success" do
         task.wait(2.5)
     end
+
+    Data.ProcessQueue:Connect(function(id, vals, datastore)
+        if datastore:Remove(id) ~= "Success" then return end
+
+        for i,v in pairs(vals) do
+            datastore[i][v[1]] = v[2]
+        end
+    end)
+
+    return Data
 end
 
 function DatastoreManager.ReadDatastore(path: string | Datastore.DataStore)
@@ -72,6 +82,23 @@ function DatastoreManager.ReadDatastore(path: string | Datastore.DataStore)
     end
 
     return val.Value
+end
+
+function DatastoreManager.QueueIfFail(path: string | Datastore.Datastore, value)
+    local result
+    local Data: Datastore.DataStore
+
+    if typeof(path) ~= 'string' then
+        Data = path
+        result = path:Open()
+    end
+
+    if result == "Success" then
+        return "Success"
+    end
+
+    return "Queue"
+
 end
 
 return DatastoreManager

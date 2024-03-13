@@ -12,9 +12,6 @@ local __DatastoreName = "TestingFactions"
 
 local NameStore = Manager.IndexDatastore("Storage", "Names")
 
-local DataCache = {}
-local CurrentFactions = {}
-
 if Manager.ReadDatastore(NameStore) == nil then
 	Manager.OpenDatastore(NameStore, {})
     NameStore:Close()
@@ -31,6 +28,7 @@ local Kick = Server.Network.Function("Kick", true)
 local Ban = Server.Network.Function("Ban", true)
 local Leave = Server.Network.Function("Leave", true)
 
+local Cache = {}
 
 local GetFactions = Server.Network.Function("GetFactions", true)
 
@@ -59,7 +57,7 @@ Create:OnInvoke(function(sender: Player, FactionID: string)
 
     NewFaction.Value.Members[sender.UserId] = "Owner"
     NameStore.Value[FactionID] = true
-    CurrentFactions[FactionID] = NewFaction.Value
+    Cache[FactionID] = NewFaction.Value
 
     NameStore:Close()
     NewFaction:Close()
@@ -88,13 +86,30 @@ end)
 Invite:OnInvoke(function(player, UserId)
     local data = Manager.IndexDatastore("PlayerData", player.UserId).Value
     if data.Faction == "None" then return end
+    local FactionStore = Manager.OpenDatastore("Factions/"..data.Faction)
+    
+
+
+
     local invitedPLayer = Manager.IndexDatastore("PlayerData", UserId)
+    local result = Manager.QueueIfFail(invitedPLayer)
+
+    invitedPLayer:Queue({
+        Invites = {}
+    })
+
+    canary.Signal("PlayerInvited"):Fire("PlayerInvited", data.Faction, UserId)
 end)
 
 Leave:OnInvoke(function(player)
     local data = Manager.IndexDatastore("PlayerData", player.UserId).Value
     if data.Faction == "None" then return end
     UpdateReading()
+    local Faction = Manager.IndexDatastore("Factions", data.Faction)
+    Manager.OpenDatastore(Faction)
+    Faction.Value.Members[player.UserId] = nil
+    data.Faction = nil
+    Faction:Close()
 end)
 
 local __Template = {
@@ -123,5 +138,22 @@ end)
 canary.Signal("PlayerLeft"):Connect(function(player)
 
 end)
+
+canary.Signal("GetUpdatedFaction"):Connect(function(faction)
+    local success, err = pcall(function()
+        local result = Map:GetAsync(faction)
+        
+        if result then return result end
+        return Manager.ReadDatastore("Factions/"..faction)
+    end)
+end)
+
+local function UpdateCache()
+    for i,v in pairs(LastRead) do
+        Cache[v] = Manager.ReadDatastore("Factions/"..v)
+    end
+end
+
+UpdateCache()
 
 script:SetAttribute("__init", true)
