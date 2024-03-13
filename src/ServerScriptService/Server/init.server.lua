@@ -21,7 +21,6 @@ if Manager.ReadDatastore(NameStore) == nil then
 end
 
 local LastRead, LastReadTime = {}, 0
-
 local Server = canary.Server()
 
 local Create = Server.Network.Function("Create", true)
@@ -34,9 +33,7 @@ local Leave = Server.Network.Function("Leave", true)
 
 local GetFactions = Server.Network.Function("GetFactions", true)
 
-Create:OnInvoke(function(sender: Player, FactionID: string)
-    if string.len(FactionID) > 5 then return end
-
+local function UpdateReading()
     if os.clock() - LastReadTime > 5 then
         LastReadTime = os.clock()
 		local CurrentRead = NameStore:Read().Value
@@ -45,7 +42,12 @@ Create:OnInvoke(function(sender: Player, FactionID: string)
             LastRead = CurrentRead
         end
     end
-    
+end
+
+Create:OnInvoke(function(sender: Player, FactionID: string)
+    if string.len(FactionID) > 5 then return end
+    UpdateReading()
+
     if LastRead[FactionID] then return end
 
     local NewFaction = Manager.IndexDatastore("Factions", FactionID)
@@ -55,7 +57,6 @@ Create:OnInvoke(function(sender: Player, FactionID: string)
     end
 
     NewFaction.Value.Members[sender.UserId] = "Owner"
-    DataCache[sender.UserId].Faction = FactionID
     NameStore.Value[FactionID] = true
     CurrentFactions[FactionID] = NewFaction.Value
 
@@ -69,38 +70,57 @@ Create:SetRateLimit(5, 10, function(sender)
 end)
 
 
-Join:OnInvoke(function(sender)
+Join:OnInvoke(function(player, FactionID)
+    local data = Manager.IndexDatastore("PlayerData", player.UserId).Value
+    if data.Faction ~= "None" then return end
+    if data.JoinRequests[FactionID] then return end
+    UpdateReading()
+
+    local RegisteredFaction = Manager.IndexDatastore("Factions", FactionID)
+    local Read = Manager.ReadDatastore(RegisteredFaction) :: Template.factionT
+    if Read == nil then return end
+    if Read.JoinRequests[player.UserId] then return end
+    Manager.OpenDatastore(RegisteredFaction)
+
+    local FactionValue = RegisteredFaction.Value :: Template.factionT
+    FactionValue.JoinRequests[player.UserId] = true
+    data.JoinRequests[FactionID] = true
+
+    Map:SetAsync(FactionID, FactionValue, 10000)
+    RegisteredFaction:Close()
+end)
+
+Invite:OnInvoke(function(player)
+    local data = Manager.IndexDatastore("PlayerData", player.UserId).Value
+    if data.Faction == "None" then return end
     
 end)
 
 local __Template = {
 	Faction = "None",
+    JoinRequests = {},
+    Invites = {},
 	TimeIngame = 0
 }
 
 canary.Signal("PlayerJoined"):Connect(function(player)
     local Data = Manager.IndexDatastore("PlayerData", player.UserId)
 
-    Manager.OpenDatastore(Data, {
-        Faction = "None",
-    })
+    Manager.OpenDatastore(Data, __Template)
 
 	local FactionName = Data.Value.Faction
-	print(DataCache[player.UserId])
+	print(Data.Value)
 	if FactionName ~= "None" then
 		if not Map:GetAsync(FactionName) then
-			local RegisteredFaction = Datastore.new(__DatastoreName, "Factions", FactionName)
-			Map:SetAsync(FactionName, RegisteredFaction:Read().Value, 10000)
+			local RegisteredFaction = Manager.IndexDatastore("Factions", FactionName)
+			Map:SetAsync(FactionName, Manager.ReadDatastore(RegisteredFaction), 10000)
 		end
 	end
 end)
 
 
 canary.Signal("PlayerLeft"):Connect(function(player)
-	if DataCache[player.UserId] then
-		DataCache[player.UserId]:Close()
-		DataCache[player.UserId] = nil
-	end
+
 end)
 
 script:SetAttribute("__init", true)

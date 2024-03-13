@@ -1,3 +1,12 @@
+--[[
+			PURPOSE OF THIS SCRIPT
+
+	the main script doesnt get to the playeradded 
+	connection before the first player joins (in studio)
+	and i dont want the code to look stupid with a connection and
+	function in between a bunch of variables
+]]
+
 local Canary = require(game:GetService("ReplicatedStorage").Shared.Packages.canaryengine)
 local Players = game:GetService("Players")
 repeat
