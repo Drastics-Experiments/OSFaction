@@ -26,6 +26,7 @@ local Server = canary.Server()
 local Create = Server.Network.Function("Create", true)
 local Invite = Server.Network.Function("Invite", true)
 local Join = Server.Network.Function("Join", true)
+
 local Kick = Server.Network.Function("Kick", true)
 local Ban = Server.Network.Function("Ban", true)
 local Leave = Server.Network.Function("Leave", true)
@@ -64,12 +65,6 @@ Create:OnInvoke(function(sender: Player, FactionID: string)
     NewFaction:Close()
 end)
 
-Create:SetRateLimit(5, 10, function(sender)
-    --TODO
-    print("RATELIMIT REACHED")
-end)
-
-
 Join:OnInvoke(function(player, FactionID)
     local data = Manager.IndexDatastore("PlayerData", player.UserId).Value
     if data.Faction ~= "None" then return end
@@ -94,6 +89,12 @@ Invite:OnInvoke(function(player, UserId)
     local data = Manager.IndexDatastore("PlayerData", player.UserId).Value
     if data.Faction == "None" then return end
     local invitedPLayer = Manager.IndexDatastore("PlayerData", UserId)
+end)
+
+Leave:OnInvoke(function(player)
+    local data = Manager.IndexDatastore("PlayerData", player.UserId).Value
+    if data.Faction == "None" then return end
+    UpdateReading()
 end)
 
 local __Template = {
