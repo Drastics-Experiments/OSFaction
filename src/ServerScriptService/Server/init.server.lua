@@ -90,10 +90,10 @@ Join:OnInvoke(function(player, FactionID)
     RegisteredFaction:Close()
 end)
 
-Invite:OnInvoke(function(player)
+Invite:OnInvoke(function(player, UserId)
     local data = Manager.IndexDatastore("PlayerData", player.UserId).Value
     if data.Faction == "None" then return end
-    
+    local invitedPLayer = Manager.IndexDatastore("PlayerData", UserId)
 end)
 
 local __Template = {
