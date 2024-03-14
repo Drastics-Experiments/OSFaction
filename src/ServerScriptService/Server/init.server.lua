@@ -55,6 +55,9 @@ Create:OnInvoke(function(sender: Player, FactionID: string)
         Manager.OpenDatastore(NameStore, {})
     end
 
+    local data = Manager.IndexDatastore("PlayerData", sender.UserId).Value
+    data.Faction = FactionID
+
     NewFaction.Value.Members[sender.UserId] = "Owner"
     NameStore.Value[FactionID] = true
     Cache[FactionID] = NewFaction.Value
@@ -129,9 +132,13 @@ canary.Signal("PlayerJoined"):Connect(function(player)
 	if FactionName ~= "None" then
 		if not Map:GetAsync(FactionName) then
 			local RegisteredFaction = Manager.IndexDatastore("Factions", FactionName)
-			Map:SetAsync(FactionName, Manager.ReadDatastore(RegisteredFaction), 10000)
+            local Readvalue = Manager.ReadDatastore(RegisteredFaction)
+            print(Readvalue)
+			Map:SetAsync(FactionName, Readvalue, 10000, nil)
 		end
 	end
+
+    print(Map:GetRangeAsync(Enum.SortDirection.Ascending, 99, nil, nil))
 end)
 
 
@@ -149,11 +156,13 @@ canary.Signal("GetUpdatedFaction"):Connect(function(faction)
 end)
 
 local function UpdateCache()
+    UpdateReading()
+
     for i,v in pairs(LastRead) do
-        Cache[v] = Manager.ReadDatastore("Factions/"..v)
+        Cache[i] = Manager.ReadDatastore("Factions/"..i)
     end
 end
 
-UpdateCache()
-
 script:SetAttribute("__init", true)
+
+UpdateCache()

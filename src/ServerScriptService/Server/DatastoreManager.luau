@@ -15,23 +15,14 @@ local Stores = {} :: {
 --    key = 1
 --  }
 
-function DatastoreManager.IndexDatastore(scope: string, key: string)
-    if key ~= nil then
-        if not Stores[scope] then
-            Stores[scope] = {}
-        end
-        if not Stores[scope][key] then
-            Stores[scope][key] = Datastore.new(__DatastoreName, scope, key)
-        end
-                
-        return Stores[scope][key]
-    else
-        if not Stores[key] then
-            Stores[key] = Datastore.new(__DatastoreName, key)
-        end
+function DatastoreManager.IndexDatastore(scope: string, key: string): Datastore.DataStore
+    local found = Datastore.find(__DatastoreName, scope, key)
 
-        return Stores[key]
+    if found then
+        return found
     end
+
+    return Datastore.new(__DatastoreName, scope, key)
 end
 
 function DatastoreManager.OpenDatastore(path: string | Datastore.DataStore, template: any)
@@ -75,16 +66,14 @@ function DatastoreManager.ReadDatastore(path: string | Datastore.DataStore)
         Data = path
     end
 
-    local val = Data:Read()
-    while val ~= "Success" do
+    while Data:Read() ~= "Success" do
         task.wait(2.5)
-        val = Data:Read()
     end
 
-    return val.Value
+    return Data.Value
 end
 
-function DatastoreManager.QueueIfFail(path: string | Datastore.Datastore, value)
+function DatastoreManager.QueueIfFail(path: string | Datastore.DataStore, value)
     local result
     local Data: Datastore.DataStore
 
