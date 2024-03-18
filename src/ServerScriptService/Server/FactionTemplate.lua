@@ -1,5 +1,7 @@
 export type factionT = {
     ID: string,
+    CurrentName: string,
+    PastNames: { string },
     Members: {
         [string]: "Owner" | "Admin" | "Member"
     },
@@ -14,6 +16,8 @@ return function()
         Members = {},
         JoinRequests = {},
         BannedMembers = {},
-        Invites = {}
+        Invites = {},
+        CurrentName = "",
+        PastNames = {}
     }
 end
