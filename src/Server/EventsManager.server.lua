@@ -7,11 +7,11 @@
 	function in between a bunch of variables
 ]]
 
-local Canary = require(game:GetService("ReplicatedStorage").Shared.Packages.canaryengine)
+local Canary = require(game:GetService("ReplicatedStorage").Packages.canaryengine)
 local Players = game:GetService("Players")
 repeat
 	task.wait()
-until script.Parent.Server:GetAttribute("__init") == true
+until script.Parent.Main:GetAttribute("__init") == true
 
 Players.PlayerAdded:Connect(function(plr)
 	Canary.Signal("PlayerJoined"):Fire(plr)

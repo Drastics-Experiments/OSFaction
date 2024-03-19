@@ -3,8 +3,7 @@ local http = game:GetService("HttpService")
 local MemoryStoreService = game:GetService("MemoryStoreService")
 local CacheMap = MemoryStoreService:GetSortedMap("FactionsCache")
 
-local Shared = ReplicatedStorage.Shared
-local Packages = Shared.Packages
+local Packages = ReplicatedStorage.Packages
 
 local DatastoreManager = require(script.DatastoreModule)
 local Canary = require(Packages.canaryengine)

@@ -1,7 +1,7 @@
 local MessagingService = game:GetService("MessagingService")
 local Players = game:GetService("Players")
 
-local canary = require(game.ReplicatedStorage.Shared.Packages.canaryengine)
+local canary = require(game.ReplicatedStorage.Packages.canaryengine)
 
 local server = canary.Server()
 local function Network(name)
