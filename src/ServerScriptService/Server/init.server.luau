@@ -75,11 +75,18 @@ local function ChangeName(sender: Player, Name: string)
     if PlayerFaction == "None" then return "Not in a faction" end
     
     local IsCached = CheckIfCached(PlayerFaction)
-    if not IsCached then return end
+    if not IsCached then return "FAILED: Unknown Error" end
     
     local rank = IsCached.Members[sender.UserId]
     if rank ~= "Owner" and rank ~= "Admin" then return "not high enough rank" end
     if IsNameFiltered(Name) then return "Name is filtered" end
+    if checkNameUsed(Name) then return "Name is taken." end
+
+    local index = DatastoreManager.IndexDatastore("Factions", IsCached.ID)
+    local Data = DatastoreManager.OpenDatastore(index)
+    table.insert(Data.PastNames, Data.CurrentName)
+    Data.CurrentName = Name
+    Data:Close()
 end
 
 local function Invite(sender: Player, recipiant: Number)
