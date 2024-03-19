@@ -67,7 +67,7 @@ local function Create(sender: Player, Name: string)
     DataTable.CurrentName = Name
 
     local newfaction = DatastoreManager.IndexDatastore("Factions", id)
-    DatastoreManager.OpenDatastore(newfaction, DataTable)
+    DatastoreManager.OpenDatastore(newfaction, DataTable):Close()
 end
 
 local function ChangeName(sender: Player, Name: string)
@@ -89,7 +89,15 @@ local function ChangeName(sender: Player, Name: string)
     Data:Close()
 end
 
-local function Invite(sender: Player, recipiant: Number)
+local function Invite(sender: Player, recipiant: number)
     
+
+end
+
+local function Leave(sender: Player)
+    local Data = PlayerData[sender.UserId]
+    if Data.Faction == "None" then return end
+
+    local FactionData = CheckIfCached(Data.Faction)
 
 end
