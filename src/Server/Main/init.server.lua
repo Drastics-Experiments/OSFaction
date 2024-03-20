@@ -15,22 +15,24 @@ local PlayerData = {}
 local Cache = {}
 
 local function CheckIfCached(factionID: string)
-    local localCache = Cache[factionID]
-
-    if not localCache then
-        local mapResult, response = pcall(function()
-            localCache = CacheMap:GetAsync(factionID)
-        end)
-    end
+    local localCache = nil
+    
+    local mapResult, response = pcall(function()
+        localCache = CacheMap:GetAsync(factionID)
+    end)
 
     if not localCache then 
-        DatastoreManager.IndexDatastore("")
-    
+        local index = DatastoreManager.IndexDatastore("Factions", factionID)
+        localCache = DatastoreManager.ReadDatastore(index)
+        if localCache then
+            pcall(function()
+                CacheMap:SetAsync(localCache.ID, localCache, 10000)
+            end)
+        end
     end
 
     return localCache
 end
-
 
 local NameReadHistory = {}
 local function checkNameUsed(factionName: string)
@@ -89,8 +91,23 @@ local function ChangeName(sender: Player, Name: string)
 end
 
 local function Invite(sender: Player, recipiant: number)
-    
+end
 
+local function Join(sender: Player, Faction: string)
+    local Data = PlayerData[sender.UserId]
+    if Data.Faction ~= "None" then return end
+
+    local FactionData = CheckIfCached(Faction)
+
+    if Data.Invites[Faction] then
+        local OpenedData = DatastoreManager.OpenDatastore("Factions", Faction)
+        OpenedData.Members[sender.UserId] = true
+        Data.Faction = Faction
+        return "Success!"
+    end
+
+    FactionData.JoinRequests[sender.UserId] = true
+    
 end
 
 local function Leave(sender: Player)
@@ -98,5 +115,14 @@ local function Leave(sender: Player)
     if Data.Faction == "None" then return end
 
     local FactionData = CheckIfCached(Data.Faction)
+    local StoredFactionData = DatastoreManager.OpenDatastore("Factions", FactionData.ID)
+    local LeavingMember = StoredFactionData.Members[sender.UserId]
 
+    if LeavingMember ~= "Owner" then
+        StoredFactionData.Members[sender.UserId] = nil
+        Data.Faction = nil
+        pcall(function()
+            CacheMap:SetAsync(StoredFactionData.ID, StoredFactionData, 10000)
+        end)
+    end
 end

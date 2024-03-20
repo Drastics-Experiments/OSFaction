@@ -87,7 +87,13 @@ function DatastoreManager.QueueIfFail(path: string | Datastore.DataStore, value)
     end
 
     return "Queue"
+end
 
+function DatastoreManager.Close(path: string | Datastore.DataStore)
+    if typeof(path) == "string" then
+        local Data = Datastore.find(table.unpack(string.split(path, "/")))
+        if Data then Data:Close() end
+    end
 end
 
 return DatastoreManager

@@ -18,6 +18,7 @@ return function()
         BannedMembers = {},
         Invites = {},
         CurrentName = "",
+        ForceJoinRequest = true,
         PastNames = {}
     }
 end
