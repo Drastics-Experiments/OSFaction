@@ -7,7 +7,8 @@ export type factionT = {
     },
     JoinRequests: { [string]: boolean },
     BannedMembers: { [string]: boolean },
-    Invites: { [string]: boolean }
+    Invites: { [string]: boolean },
+    LastRename: number
 }
 
 return function()
@@ -19,6 +20,7 @@ return function()
         Invites = {},
         CurrentName = "",
         ForceJoinRequest = true,
-        PastNames = {}
+        PastNames = {},
+        LastRename = os.clock()
     }
 end

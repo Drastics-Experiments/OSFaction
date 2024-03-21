@@ -14,4 +14,15 @@ end
 return {
     Create = func("Create"),
     Kick = func("Kick"),
+    Ban = func("Ban"),
+    SetRank = func("SetRank"),
+    Invite = func("Invite"),
+    Join = func("Join"),
+    Leave = func("Leave"),
+    ChangeName = func("ChangeName"),
+    SetDescription = func("SetDescription"),
+
+
+    KickedOrBanned = event("KickedOrBanned"),
+    Invited = event("Invited")
 }
