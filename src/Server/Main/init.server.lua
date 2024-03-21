@@ -5,7 +5,7 @@ local CacheMap = MemoryStoreService:GetSortedMap("FactionsCache")
 
 local Packages = ReplicatedStorage.Packages
 
-local DatastoreManager = require(script.DatastoreModule)
+local DatastoreManager = require(script.Datastore)
 local Canary = require(Packages.canaryengine)
 local FactionDataTemplate = require(script.FactionTemplate)
 
