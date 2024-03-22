@@ -10,6 +10,13 @@ return function(target, props)
     local button1 = val()
     local button2 = val()
 
+    local scale=val()
+    local toval = val(1)
+    local spring = spring(scale, 10, 0.9)
+    local observeing = observe(spring)
+
+    local scale2 = val()
+
     local gui = new"Frame" {
         Size = UDim2.new(1,0,1,0),
         Transparency = 1,
@@ -89,6 +96,18 @@ return function(target, props)
                         ApplyStrokeMode = Enum.ApplyStrokeMode.Border
 
                     },
+                    new"UIScale" {
+                        [ref] = scale
+                        [event "MouseEnter"] = function()
+                            toval:set(1.2)
+                            local disconnect = observeing:OnChange(function()
+                                scale:get().Scale = spring:get()
+                            end)
+                            repeat task.wait() until spring:get() == toval:get()
+
+                            disconnect()
+                        end
+                    }
                 }
             },
             new"TextButton" {
