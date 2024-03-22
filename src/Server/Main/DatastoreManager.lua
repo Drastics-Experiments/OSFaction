@@ -80,6 +80,8 @@ function DatastoreManager.QueueIfFail(path: string | Datastore.DataStore, value)
     if typeof(path) ~= 'string' then
         Data = path
         result = path:Open()
+    elseif typeof(path) == 'string' then
+        
     end
 
     if result == "Success" then

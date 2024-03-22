@@ -1,13 +1,17 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local http = game:GetService("HttpService")
+local MessagingService = game:GetService("MessagingService")
 local MemoryStoreService = game:GetService("MemoryStoreService")
 local CacheMap = MemoryStoreService:GetSortedMap("FactionsCache")
+local RunService = game:GetService("RunService")
+local Chat = game:GetService("Chat")
 
 local Packages = ReplicatedStorage.Packages
 
 local DatastoreManager = require(script.Datastore)
 local Canary = require(Packages.canaryengine)
 local FactionDataTemplate = require(script.FactionTemplate)
+local PlayerDataTemplate = require(script.PlayerDataTemplate)
 
 local Server = Canary.Server()
 
@@ -51,7 +55,22 @@ local function CanCreate(sender: Player)
     return false
 end
 
-local function IsNameFiltered(Name: string)
+local AllowedCharacters = {"a","b","c","d","e","f","g","h","i","j","k","l","m","n","o","p","q","r","s","t","u","v","w","x","y","z"," "}
+
+local function IsNameFiltered(sender: Player, Name: string)
+    local result = Chat:FilterStringForBroadcast(Name, sender)
+
+    if string.find(result, "#") then
+        return true
+    end
+
+    local split = string.split(Name, "")
+    for i,v in pairs(split) do
+        if not table.find(AllowedCharacters, v) then
+            return true
+        end
+    end
+
     return false
 end
 
@@ -90,24 +109,43 @@ local function ChangeName(sender: Player, Name: string)
     Data:Close()
 end
 
+local function SetDescription(sender: Player, NewDescription: string)
+    if IsNameFiltered(NewDescription) then return "Description was filtered or has an invalid character" end
+    if PlayerData[sender.UserId].Faction == "None" then return "You are not in a faction" end
+
+    local index = DatastoreManager.IndexDatastore("Factions", PlayerData[sender.UserId].Faction)
+    local Data = DatastoreManager.OpenDatastore(index)
+
+    local path = Data.Members[sender.UserId]
+    if path == "Owner" or path == "Admin" then
+        Data.Description = NewDescription
+        CacheMap:SetAsync(Data.ID, Data, 10000)
+        MessagingService:PublishAsync("FactionMessages", {
+            "UpdateFactionCache",
+            Data.ID
+        })
+
+        DatastoreManager.Close(index)
+    end
+end
+
 local function Invite(sender: Player, recipiant: number)
 end
 
 local function Join(sender: Player, Faction: string)
     local Data = PlayerData[sender.UserId]
     if Data.Faction ~= "None" then return end
-
     local FactionData = CheckIfCached(Faction)
 
     if Data.Invites[Faction] then
         local OpenedData = DatastoreManager.OpenDatastore("Factions", Faction)
         OpenedData.Members[sender.UserId] = true
         Data.Faction = Faction
+        DatastoreManager.Close("Factions", Faction)
         return "Success!"
     end
 
     FactionData.JoinRequests[sender.UserId] = true
-    
 end
 
 local function Leave(sender: Player)
@@ -120,9 +158,44 @@ local function Leave(sender: Player)
 
     if LeavingMember ~= "Owner" then
         StoredFactionData.Members[sender.UserId] = nil
-        Data.Faction = nil
+        Data.Faction = "None"
         pcall(function()
             CacheMap:SetAsync(StoredFactionData.ID, StoredFactionData, 10000)
         end)
     end
+end
+
+local function Kick(sender: Player, PlayerToKick: number)
+    local Data = PlayerData[sender.UserId]
+    local FactionData = CheckIfCached(Data.Faction)
+
+    local path = FactionData.Members[sender.UserId] 
+    if path ~= "Owner" then return end
+    
+
+    FactionData.Members[PlayerToKick] = nil
+end
+
+local function Ban(sender: Player, PlayerToBan: number)
+end
+
+local function ChangeRank(sender: Player, PlayerToChange: number, NewRank: "Admin" | "Member")
+end
+
+local Connections = {}
+
+local function LoadPlayer(sender: Player)
+    local index = DatastoreManager.IndexDatastore("PlayerData", sender.UserId)
+    local Data = DatastoreManager.OpenDatastore(index, PlayerDataTemplate())
+
+    Connections[sender.UserId] = RunService.Heartbeat:Connect(function(dt)
+        Data.TimeIngame += dt
+    end)
+end
+
+local function UnloadPlayer(sender: Player)
+    local index = DatastoreManager.IndexDatastore("PlayerData", sender.UserId)
+    DatastoreManager.Close(index)
+
+    Connections[sender.UserId]:Disconnect()
 end
