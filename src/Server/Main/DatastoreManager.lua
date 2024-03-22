@@ -73,7 +73,7 @@ function DatastoreManager.ReadDatastore(path: string | Datastore.DataStore)
     return Data.Value
 end
 
-function DatastoreManager.QueueIfFail(path: string | Datastore.DataStore, value)
+function DatastoreManager.QueueIfFail(path: string | Datastore.DataStore)
     local result
     local Data: Datastore.DataStore
 
@@ -81,7 +81,7 @@ function DatastoreManager.QueueIfFail(path: string | Datastore.DataStore, value)
         Data = path
         result = path:Open()
     elseif typeof(path) == 'string' then
-        
+
     end
 
     if result == "Success" then
