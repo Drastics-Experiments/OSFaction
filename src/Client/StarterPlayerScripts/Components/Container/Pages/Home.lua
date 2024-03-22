@@ -3,12 +3,18 @@ local new = Fusion.New
 local children = Fusion.Children
 local ref = Fusion.Ref
 local val = Fusion.Value
+local event = Fusion.OnEvent
 
-return function(target)
+return function(target, props)
+    local container = val()
+    local button1 = val()
+    local button2 = val()
+
     local gui = new"Frame" {
         Size = UDim2.new(1,0,1,0),
         Transparency = 1,
         Parent = target,
+        [ref] = container,
 
         [children] = {
             new"Frame" {
@@ -30,6 +36,9 @@ return function(target)
                             new"UIStroke" {
                                 Transparency = 0.6,
                                 Thickness = 0.6,
+                                Color = Color3.fromRGB(255, 255, 255),
+                                ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+
                             },
                             new"TextLabel" {
                                 Position = UDim2.new(1.17, 0,0.24, 0),
@@ -53,9 +62,64 @@ return function(target)
                                 TextXAlignment = "Left"
                             }
                         }
-                    }
+                    },
                 }
-            }
+            },
+
+            new"TextButton" {
+                BackgroundColor3 = Color3.fromRGB(34, 34, 34),
+                BackgroundTransparency = 1,
+                TextColor3 = Color3.fromRGB(255,255,255),
+                Position = UDim2.new(0.018, 0,0.821, 0),
+                Size = UDim2.new(0.466, 0,0.151, 0),
+                FontFace = Font.fromName("GothamSSM", Enum.FontWeight.ExtraBold, Enum.FontStyle.Normal),
+                TextTransparency = 0.5,
+                Text = "Create Faction",
+                [ref] = button2,
+                [event "Activated"] = props.Page1,
+
+                [children] = {
+                    new"UICorner" {
+                        CornerRadius = UDim.new(0, 5)
+                    },
+                    new"UIStroke" {
+                        Transparency = 0.6,
+                        Thickness = 0.6,
+                        Color = Color3.fromRGB(255, 255, 255),
+                        ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+
+                    },
+                }
+            },
+            new"TextButton" {
+                BackgroundColor3 = Color3.fromRGB(34, 34, 34),
+                BackgroundTransparency = 1,
+                TextColor3 = Color3.fromRGB(255,255,255),
+                Position = UDim2.new(0.518, 0,0.817, 0),
+                Size = UDim2.new(0.466, 0,0.151, 0),
+                FontFace = Font.fromName("GothamSSM", Enum.FontWeight.ExtraBold, Enum.FontStyle.Normal),
+                TextTransparency = 0.5,
+                Text = "Other Factions",
+                [ref] = button1,
+                [event "Activated"] = props.Page2,
+                [children] = {
+                    new"UICorner" {
+                        CornerRadius = UDim.new(0, 5)
+                    },
+                    new"UIStroke" {
+                        Transparency = 0.6,
+                        Thickness = 0.6,
+                        Color = Color3.fromRGB(255, 255, 255),
+                        ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+                    },
+                }
+            },
         }
+    }
+
+    return {
+        Container = container:get(),
+        Browser = button1:get(),
+        ExtraButton = button2:get()
     }
 end

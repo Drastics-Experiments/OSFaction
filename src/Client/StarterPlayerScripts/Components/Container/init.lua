@@ -3,9 +3,42 @@ local new = Fusion.New
 local children = Fusion.Children
 local ref = Fusion.Ref
 local val = Fusion.Value
+local spring = Fusion.Spring
+local observer = Fusion.Observer
+
+local uis = {
+    Home = require(script.Pages.Home),
+    Browser = require(script.Pages["Browser.story"])
+}
+
 local Container = {}
 
-function Container.SwapPage(page: string)
+function Container.SwapPage(target, page: string, args)
+    if page ~= "Home" then
+        local pos = val(UDim2.new(0,0,1,0))
+        local spr = spring(pos, 2, 1)
+        
+        local args
+        args = {
+            ['Page1'] = function()
+                Container.SwapPage(target, "Home", args)
+            end,
+        
+            ['Page2'] = function()
+                print("b")
+            end
+        }
+        local gui = uis[page](target, args)
+        gui.Container.Position = UDim2.new(0, 0, 1, 0)
+        local a = observer(spr)
+        pos:set(UDim2.new(0, 0, 0, 0))
+        
+        a:onChange(function()
+            print(spr:get())
+            gui.Container.Position = spr:get()
+        end)
+    end
+
 end
 
 function Container.__init(target, props) 
@@ -53,7 +86,15 @@ function Container.__init(target, props)
             }
         } 
     }
-    require(script.Pages.Home)(BG)
+    require(script.Pages.Home)(BG, {
+        ['Page1'] = function()
+            Container.SwapPage(BG, "Home")
+        end,
+    
+        ['Page2'] = function()
+            print("b")
+        end
+    })
     local BlurIntensity = 0.5
 
     local RunService = game:GetService('RunService')
@@ -234,6 +275,7 @@ function Container.__init(target, props)
 
     UpdateOrientation(true)
     RunService:BindToRenderStep(uid, 2000, UpdateOrientation)
+    return Gui
 end
 
 return Container
